@@ -171,7 +171,8 @@ public class DeluxeMenus extends JavaPlugin {
   public void onDisable() {
     Bukkit.getMessenger().unregisterOutgoingPluginChannel(this, "BungeeCord");
 
-    Bukkit.getScheduler().cancelTasks(this);
+    Bukkit.getGlobalRegionScheduler().cancelTasks(this);
+    Bukkit.getAsyncScheduler().cancelTasks(this);
 
     if (this.adventure != null) {
       this.adventure.close();

@@ -4,8 +4,7 @@ import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.cache.SimpleCache;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 
 import net.Indyuce.mmoitems.MMOItems;
@@ -42,7 +41,7 @@ public class MMOItemsHook implements ItemHook, SimpleCache {
 
         ItemStack mmoItem = null;
         try {
-            mmoItem = Bukkit.getScheduler().callSyncMethod(DeluxeMenus.getInstance(), () -> {
+            mmoItem = callSyncMethod(() -> {
                 ItemStack item = MMOItems.plugin.getItem(itemType, splitArgs[1]);
 
                 if (item == null) {
@@ -68,5 +67,17 @@ public class MMOItemsHook implements ItemHook, SimpleCache {
     @Override
     public void clearCache() {
         cache.clear();
+    }
+
+    private <T> Future<T> callSyncMethod(final Callable<T> task) {
+        CompletableFuture<T> completableFuture = new CompletableFuture<>();
+        Bukkit.getGlobalRegionScheduler().execute(DeluxeMenus.getInstance(), () -> {
+            try {
+                completableFuture.complete(task.call());
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+        return completableFuture;
     }
 }

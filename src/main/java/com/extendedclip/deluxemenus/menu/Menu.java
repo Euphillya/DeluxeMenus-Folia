@@ -205,10 +205,10 @@ public class Menu extends Command {
     }
 
     if (close) {
-      Bukkit.getScheduler().runTask(DeluxeMenus.getInstance(), () -> {
+      p.getScheduler().runDelayed(DeluxeMenus.getInstance(), (t) -> {
         p.closeInventory();
         cleanInventory(p, DeluxeMenus.getInstance().getMenuItemMarker());
-      });
+      }, null, 1);
     }
     holders.remove(holder);
     lastMenus.put(p.getUniqueId(), holder.getMenu());
@@ -389,7 +389,7 @@ public class Menu extends Command {
       return;
     }
 
-    Bukkit.getScheduler().runTaskAsynchronously(DeluxeMenus.getInstance(), () -> {
+    Bukkit.getAsyncScheduler().runNow(DeluxeMenus.getInstance(), (t) -> {
 
       Set<MenuItem> activeItems = new HashSet<>();
 
@@ -480,7 +480,7 @@ public class Menu extends Command {
 
       final boolean updatePlaceholders = update;
 
-      Bukkit.getScheduler().runTask(DeluxeMenus.getInstance(), () -> {
+      holder.getViewer().getScheduler().runDelayed(DeluxeMenus.getInstance(), (ta) -> {
         if (inMenu(holder.getViewer())) {
           closeMenu(holder.getViewer(), false);
         }
@@ -491,7 +491,7 @@ public class Menu extends Command {
         if (updatePlaceholders) {
           holder.startUpdatePlaceholdersTask();
         }
-      });
+      }, null, 1);
     });
   }
 

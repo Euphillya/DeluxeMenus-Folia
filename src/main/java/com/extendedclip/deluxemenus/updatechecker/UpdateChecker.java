@@ -9,6 +9,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
+
+import com.extendedclip.deluxemenus.utils.schedulers.FoliaRunnable;
 import net.kyori.adventure.text.TextReplacementConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -34,21 +36,21 @@ public class UpdateChecker implements Listener {
   public UpdateChecker(final @NotNull DeluxeMenus instance) {
     plugin = instance;
 
-    new BukkitRunnable() {
+    new FoliaRunnable(Bukkit.getAsyncScheduler(), null) {
       @Override
       public void run() {
         if (check()) {
-          new BukkitRunnable() {
+          new FoliaRunnable(Bukkit.getGlobalRegionScheduler()) {
 
             @Override
             public void run() {
               register();
             }
-          }.runTask(plugin);
+          }.run(plugin);
         }
       }
 
-    }.runTaskAsynchronously(plugin);
+    }.run(plugin);
   }
 
   private void register() {
