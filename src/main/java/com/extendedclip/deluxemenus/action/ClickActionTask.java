@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
+import com.extendedclip.deluxemenus.utils.schedulers.FoliaRunnable;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
@@ -24,7 +25,7 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
-public class ClickActionTask extends BukkitRunnable {
+public class ClickActionTask extends FoliaRunnable {
 
     private final DeluxeMenus plugin;
     private final UUID uuid;
@@ -42,6 +43,7 @@ public class ClickActionTask extends BukkitRunnable {
             @NotNull final Map<String, String> arguments,
             final boolean parsePlaceholdersInArguments
     ) {
+        super(Bukkit.getGlobalRegionScheduler());
         this.plugin = plugin;
         this.uuid = uuid;
         this.actionType = actionType;

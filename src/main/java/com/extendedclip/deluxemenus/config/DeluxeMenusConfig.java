@@ -1494,11 +1494,11 @@ public class DeluxeMenusConfig {
             );
 
             if (action.hasDelay()) {
-              actionTask.runTaskLater(plugin, action.getDelay(holder));
+              actionTask.runDelayed(plugin, action.getDelay(holder));
               continue;
             }
 
-            actionTask.runTask(plugin);
+            actionTask.run(plugin);
           }
         }
       };

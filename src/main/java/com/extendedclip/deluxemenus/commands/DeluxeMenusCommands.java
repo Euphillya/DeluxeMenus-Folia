@@ -183,7 +183,7 @@ public class DeluxeMenusCommands implements CommandExecutor {
       );
 
       if (action.hasDelay()) {
-        actionTask.runTaskLater(plugin, action.getDelay(holder));
+        actionTask.runDelayed(plugin, action.getDelay(holder));
 
         plugin.sms(
             sender,
@@ -193,7 +193,7 @@ public class DeluxeMenusCommands implements CommandExecutor {
         return true;
       }
 
-      actionTask.runTask(plugin);
+      actionTask.run(plugin);
 
       plugin.sms(
           sender,

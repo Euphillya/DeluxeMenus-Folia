@@ -2,6 +2,8 @@ package com.extendedclip.deluxemenus.menu;
 
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.utils.StringUtils;
+import com.extendedclip.deluxemenus.utils.schedulers.FoliaRunnable;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 public class MenuHolder implements InventoryHolder {
 
@@ -25,7 +28,7 @@ public class MenuHolder implements InventoryHolder {
     private Player placeholderPlayer;
     private String menuName;
     private Set<MenuItem> activeItems;
-    private BukkitTask updateTask = null;
+    private ScheduledTask updateTask = null;
     private Inventory inventory;
     private boolean updating;
     private boolean parsePlaceholdersInArguments;
@@ -47,7 +50,7 @@ public class MenuHolder implements InventoryHolder {
         return viewer.getName();
     }
 
-    public BukkitTask getUpdateTask() {
+    public ScheduledTask getUpdateTask() {
         return updateTask;
     }
 
@@ -210,7 +213,7 @@ public class MenuHolder implements InventoryHolder {
             stopPlaceholderUpdate();
         }
 
-        updateTask = new BukkitRunnable() {
+        updateTask = new FoliaRunnable(Bukkit.getAsyncScheduler(), TimeUnit.MILLISECONDS) {
 
             @Override
             public void run() {
@@ -275,8 +278,8 @@ public class MenuHolder implements InventoryHolder {
                 }
             }
 
-        }.runTaskTimerAsynchronously(DeluxeMenus.getInstance(), 20L,
-                20L * Menu.getMenu(menuName).getUpdateInterval());
+        }.runAtFixedRate(DeluxeMenus.getInstance(), 20L*50,
+                20L * Menu.getMenu(menuName).getUpdateInterval()*50);
     }
 
     public boolean isUpdating() {
