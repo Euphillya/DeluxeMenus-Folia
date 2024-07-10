@@ -138,7 +138,7 @@ public class MenuHolder implements InventoryHolder {
 
         stopPlaceholderUpdate();
 
-        Bukkit.getScheduler().runTaskAsynchronously(DeluxeMenus.getInstance(), () -> {
+        Bukkit.getAsyncScheduler().runNow(DeluxeMenus.getInstance(), (scheduledTask) -> {
 
             final Set<MenuItem> active = new HashSet<>();
 
@@ -176,7 +176,7 @@ public class MenuHolder implements InventoryHolder {
                 Menu.closeMenu(getViewer(), true);
             }
 
-            Bukkit.getScheduler().runTask(DeluxeMenus.getInstance(), () -> {
+            getViewer().getScheduler().run(DeluxeMenus.getInstance(), (scheduledTask1) -> {
 
                 boolean update = false;
 
@@ -204,7 +204,7 @@ public class MenuHolder implements InventoryHolder {
                 }
 
                 setUpdating(false);
-            });
+            }, null);
         });
     }
 
