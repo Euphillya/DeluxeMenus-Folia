@@ -1,6 +1,7 @@
 package com.extendedclip.deluxemenus.menu;
 
 import com.extendedclip.deluxemenus.DeluxeMenus;
+import com.extendedclip.deluxemenus.menu.options.MenuOptions;
 import com.extendedclip.deluxemenus.utils.StringUtils;
 import com.extendedclip.deluxemenus.utils.schedulers.FoliaRunnable;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +34,7 @@ public class MenuHolder implements InventoryHolder {
     private Inventory inventory;
     private boolean updating;
     private boolean parsePlaceholdersInArguments;
+    private boolean parsePlaceholdersAfterArguments;
     private Map<String, String> typedArgs;
 
     public MenuHolder(Player viewer) {
@@ -87,11 +90,14 @@ public class MenuHolder implements InventoryHolder {
         return null;
     }
 
-    public Menu getMenu() {
-        return Menu.getMenu(menuName);
+    public Optional<Menu> getMenu() {
+        return Menu.getMenuByName(menuName);
     }
 
     public @NotNull String setPlaceholdersAndArguments(final @NotNull String string) {
+        if (parsePlaceholdersAfterArguments) {
+            return setPlaceholders(setArguments(string));
+        }
         return setArguments(setPlaceholders(string));
     }
 
@@ -117,9 +123,14 @@ public class MenuHolder implements InventoryHolder {
 
     public void refreshMenu() {
 
-        Menu menu = getMenu();
+        Optional<Menu> optionalMenu = getMenu();
+        if (optionalMenu.isEmpty()) {
+            return;
+        }
 
-        if (menu == null || menu.getMenuItems() == null || menu.getMenuItems().size() <= 0) {
+        Menu menu = optionalMenu.get();
+
+        if (menu.getMenuItems().isEmpty()) {
             return;
         }
 
@@ -127,7 +138,7 @@ public class MenuHolder implements InventoryHolder {
 
         stopPlaceholderUpdate();
 
-        Bukkit.getAsyncScheduler().runNow(DeluxeMenus.getInstance(), (t) -> {
+        Bukkit.getScheduler().runTaskAsynchronously(DeluxeMenus.getInstance(), () -> {
 
             final Set<MenuItem> active = new HashSet<>();
 
@@ -165,7 +176,7 @@ public class MenuHolder implements InventoryHolder {
                 Menu.closeMenu(getViewer(), true);
             }
 
-            getViewer().getScheduler().runDelayed(DeluxeMenus.getInstance(), (ta) -> {
+            Bukkit.getScheduler().runTask(DeluxeMenus.getInstance(), () -> {
 
                 boolean update = false;
 
@@ -175,7 +186,7 @@ public class MenuHolder implements InventoryHolder {
 
                     int slot = item.options().slot();
 
-                    if (slot >= menu.getSize()) {
+                    if (slot >= menu.options().size()) {
                         continue;
                     }
 
@@ -193,7 +204,7 @@ public class MenuHolder implements InventoryHolder {
                 }
 
                 setUpdating(false);
-            }, null, 1);
+            });
         });
     }
 
@@ -278,8 +289,11 @@ public class MenuHolder implements InventoryHolder {
                 }
             }
 
-        }.runAtFixedRate(DeluxeMenus.getInstance(), 20L*50,
-                20L * Menu.getMenu(menuName).getUpdateInterval()*50);
+        }.runAtFixedRate(DeluxeMenus.getInstance(), 20L * 50,
+                20L * 50 * Menu.getMenuByName(menuName)
+                        .map(Menu::options)
+                        .map(MenuOptions::updateInterval)
+                        .orElse(10));
     }
 
     public boolean isUpdating() {
@@ -291,7 +305,7 @@ public class MenuHolder implements InventoryHolder {
     }
 
     @Override
-    public Inventory getInventory() {
+    public @NotNull Inventory getInventory() {
         return this.inventory;
     }
 
@@ -311,8 +325,16 @@ public class MenuHolder implements InventoryHolder {
         this.parsePlaceholdersInArguments = parsePlaceholdersInArguments;
     }
 
+    public void parsePlaceholdersAfterArguments(final boolean parsePlaceholdersAfterArguments) {
+        this.parsePlaceholdersAfterArguments = parsePlaceholdersAfterArguments;
+    }
+
     public boolean parsePlaceholdersInArguments() {
         return parsePlaceholdersInArguments;
+    }
+
+    public boolean parsePlaceholdersAfterArguments() {
+        return parsePlaceholdersAfterArguments;
     }
 
     public void setPlaceholderPlayer(Player placeholderPlayer) {

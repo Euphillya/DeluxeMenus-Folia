@@ -2,6 +2,8 @@ package com.extendedclip.deluxemenus.menu;
 
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.hooks.ItemHook;
+import com.extendedclip.deluxemenus.menu.options.HeadType;
+import com.extendedclip.deluxemenus.menu.options.MenuItemOptions;
 import com.extendedclip.deluxemenus.nbt.NbtProvider;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
 import com.extendedclip.deluxemenus.utils.ItemUtils;
@@ -10,11 +12,9 @@ import com.extendedclip.deluxemenus.utils.VersionHelper;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.block.Banner;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.Levelled;
 import org.bukkit.block.data.type.Light;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -85,10 +85,10 @@ public class MenuItem {
 
         final String finalMaterial = lowercaseStringMaterial;
         final ItemHook pluginHook = DeluxeMenus.getInstance().getItemHooks().values()
-            .stream()
-            .filter(x -> finalMaterial.startsWith(x.getPrefix()))
-            .findFirst()
-            .orElse(null);
+                .stream()
+                .filter(x -> finalMaterial.startsWith(x.getPrefix()))
+                .findFirst()
+                .orElse(null);
 
         if (pluginHook != null) {
             itemStack = pluginHook.getItem(holder.setPlaceholdersAndArguments(stringMaterial.substring(pluginHook.getPrefix().length())));
@@ -116,9 +116,6 @@ public class MenuItem {
         if (ItemUtils.isBanner(itemStack.getType())) {
             final BannerMeta meta = (BannerMeta) itemStack.getItemMeta();
             if (meta != null) {
-                if (this.options.baseColor().isPresent()) {
-                    meta.setBaseColor(this.options.baseColor().get());
-                }
                 if (!this.options.bannerMeta().isEmpty()) {
                     meta.setPatterns(this.options.bannerMeta());
                 }
@@ -233,7 +230,7 @@ public class MenuItem {
         // This checks if a lore should be kept from the hooked item, and then if a lore exists on the item
         // ItemMeta.getLore is nullable. In that case, we just create a new ArrayList so we don't add stuff to a null list.
         List<String> itemLore = Objects.requireNonNullElse(itemMeta.getLore(), new ArrayList<>());
-        // Ensures backwards compadibility with how hooked items are currently handled
+        // Ensures backwards compatibility with how hooked items are currently handled
         LoreAppendMode mode = this.options.loreAppendMode().orElse(LoreAppendMode.OVERRIDE);
         if (!this.options.hasLore() && this.options.loreAppendMode().isEmpty()) mode = LoreAppendMode.IGNORE;
         switch (mode) {
@@ -255,33 +252,11 @@ public class MenuItem {
 
         itemMeta.setLore(lore);
 
-        if (!this.options.itemFlags().isEmpty()) {
-            for (final ItemFlag flag : this.options.itemFlags()) {
-                itemMeta.addItemFlags(flag);
-            }
-        }
-
-        if (this.options.hideAttributes()) {
-            itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        }
-
-        if (this.options.hideEnchants()) {
-            itemMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        }
-
-        if (this.options.hidePotionEffects()) {
-            itemMeta.addItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
-        }
-
         if (this.options.unbreakable()) {
             itemMeta.setUnbreakable(true);
         }
 
-        if (this.options.hideUnbreakable()) {
-            itemMeta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
-        }
-
-        if (ItemUtils.hasArmorMeta(itemStack)) {
+        if (VersionHelper.HAS_ARMOR_TRIMS && ItemUtils.hasArmorMeta(itemStack)) {
             final Optional<String> trimMaterialName = this.options.trimMaterial();
             final Optional<String> trimPatternName = this.options.trimPattern();
 
@@ -376,7 +351,7 @@ public class MenuItem {
         }
 
         if (!(itemMeta instanceof EnchantmentStorageMeta) && !this.options.enchantments().isEmpty()) {
-            itemStack.addUnsafeEnchantments(this.options.enchantments());
+            this.options.enchantments().forEach((enchantment, level) -> itemMeta.addEnchant(enchantment, level, true));
         }
 
         if (this.options.lightLevel().isPresent() && itemMeta instanceof BlockDataMeta) {
@@ -413,6 +388,18 @@ public class MenuItem {
                 }
             }
         }
+
+        if (!this.options.itemFlags().isEmpty()) {
+            for (final ItemFlag flag : this.options.itemFlags()) {
+                itemMeta.addItemFlags(flag);
+
+                if (flag == ItemFlag.HIDE_ATTRIBUTES && VersionHelper.HAS_DATA_COMPONENTS) {
+                    itemMeta.setAttributeModifiers(null);
+                }
+            }
+        }
+
+        itemStack.setItemMeta(itemMeta);
 
         if (NbtProvider.isAvailable()) {
             if (this.options.nbtString().isPresent()) {
