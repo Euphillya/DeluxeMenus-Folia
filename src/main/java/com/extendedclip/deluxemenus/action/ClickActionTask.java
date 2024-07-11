@@ -109,7 +109,7 @@ public class ClickActionTask extends FoliaRunnable {
                 break;
 
             case CONSOLE:
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), executable);
+                Bukkit.getGlobalRegionScheduler().execute(plugin, () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), executable));
                 break;
 
             case MINI_MESSAGE:
