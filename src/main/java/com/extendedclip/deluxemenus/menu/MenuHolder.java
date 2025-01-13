@@ -3,8 +3,6 @@ package com.extendedclip.deluxemenus.menu;
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.menu.options.MenuOptions;
 import com.extendedclip.deluxemenus.utils.StringUtils;
-import com.extendedclip.deluxemenus.utils.schedulers.FoliaRunnable;
-import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -22,27 +20,30 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 
 public class MenuHolder implements InventoryHolder {
 
+    private final DeluxeMenus plugin;
     private final Player viewer;
+
     private Player placeholderPlayer;
     private String menuName;
     private Set<MenuItem> activeItems;
-    private ScheduledTask updateTask = null;
+    private io.papermc.paper.threadedregions.scheduler.ScheduledTask updateTask = null;
     private Inventory inventory;
     private boolean updating;
     private boolean parsePlaceholdersInArguments;
     private boolean parsePlaceholdersAfterArguments;
     private Map<String, String> typedArgs;
 
-    public MenuHolder(Player viewer) {
+    public MenuHolder(final @NotNull DeluxeMenus plugin, final @NotNull Player viewer) {
+        this.plugin = plugin;
         this.viewer = viewer;
     }
 
-    public MenuHolder(Player viewer, String menuName,
-                      Set<MenuItem> activeItems, Inventory inventory) {
+    public MenuHolder(final @NotNull DeluxeMenus plugin, final @NotNull Player viewer, final @NotNull String menuName,
+                      final @NotNull Set<@NotNull MenuItem> activeItems, final @NotNull Inventory inventory) {
+        this.plugin = plugin;
         this.viewer = viewer;
         this.menuName = menuName;
         this.activeItems = activeItems;
@@ -53,7 +54,7 @@ public class MenuHolder implements InventoryHolder {
         return viewer.getName();
     }
 
-    public ScheduledTask getUpdateTask() {
+    public io.papermc.paper.threadedregions.scheduler.ScheduledTask getUpdateTask() {
         return updateTask;
     }
 
@@ -138,7 +139,7 @@ public class MenuHolder implements InventoryHolder {
 
         stopPlaceholderUpdate();
 
-        Bukkit.getAsyncScheduler().runNow(DeluxeMenus.getInstance(), (scheduledTask) -> {
+        Bukkit.getAsyncScheduler().runNow(this.plugin, (task) -> {
 
             final Set<MenuItem> active = new HashSet<>();
 
@@ -173,10 +174,10 @@ public class MenuHolder implements InventoryHolder {
             }
 
             if (active.isEmpty()) {
-                Menu.closeMenu(getViewer(), true);
+                Menu.closeMenu(plugin, getViewer(), true);
             }
 
-            getViewer().getScheduler().run(DeluxeMenus.getInstance(), (scheduledTask1) -> {
+            getViewer().getScheduler().run(plugin, (task1) -> {
 
                 boolean update = false;
 
@@ -224,7 +225,7 @@ public class MenuHolder implements InventoryHolder {
             stopPlaceholderUpdate();
         }
 
-        updateTask = new FoliaRunnable(Bukkit.getAsyncScheduler(), TimeUnit.MILLISECONDS) {
+        updateTask = new com.extendedclip.deluxemenus.utils.schedulers.FoliaRunnable(Bukkit.getAsyncScheduler(), java.util.concurrent.TimeUnit.MILLISECONDS) {
 
             @Override
             public void run() {
@@ -258,7 +259,7 @@ public class MenuHolder implements InventoryHolder {
                                     amt = 1;
                                 }
                             } catch (Exception exception) {
-                                DeluxeMenus.printStacktrace(
+                                plugin.printStacktrace(
                                         "Something went wrong while updating item in slot " + item.options().slot() +
                                                 ". Invalid dynamic amount: " + setPlaceholdersAndArguments(item.options().dynamicAmount().get()),
                                         exception
@@ -289,11 +290,11 @@ public class MenuHolder implements InventoryHolder {
                 }
             }
 
-        }.runAtFixedRate(DeluxeMenus.getInstance(), 20L * 50,
-                20L * 50 * Menu.getMenuByName(menuName)
+        }.runAtFixedRate(plugin, 20L * 50,
+                20L * Menu.getMenuByName(menuName)
                         .map(Menu::options)
                         .map(MenuOptions::updateInterval)
-                        .orElse(10));
+                        .orElse(10) * 50);
     }
 
     public boolean isUpdating() {
@@ -343,5 +344,9 @@ public class MenuHolder implements InventoryHolder {
 
     public Player getPlaceholderPlayer() {
         return placeholderPlayer;
+    }
+
+    public @NotNull DeluxeMenus getPlugin() {
+        return plugin;
     }
 }

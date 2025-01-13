@@ -4,7 +4,8 @@ import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.cache.SimpleCache;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 
 import net.Indyuce.mmoitems.MMOItems;
@@ -17,6 +18,11 @@ import org.jetbrains.annotations.NotNull;
 public class MMOItemsHook implements ItemHook, SimpleCache {
 
     private final Map<String, ItemStack> cache = new ConcurrentHashMap<>();
+    private final DeluxeMenus plugin;
+
+    public MMOItemsHook(final @NotNull DeluxeMenus plugin) {
+        this.plugin = plugin;
+    }
 
     @Override
     public ItemStack getItem(@NotNull final String... arguments) {
@@ -53,7 +59,7 @@ public class MMOItemsHook implements ItemHook, SimpleCache {
                 return item;
             }).get();
         } catch (InterruptedException | ExecutionException e) {
-            DeluxeMenus.debug(DebugLevel.HIGHEST, Level.SEVERE, "Error getting MMOItem synchronously.");
+            plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Error getting MMOItem synchronously.");
         }
 
         return mmoItem == null ? new ItemStack(Material.STONE, 1) : mmoItem;
@@ -79,9 +85,9 @@ public class MMOItemsHook implements ItemHook, SimpleCache {
         cache.clear();
     }
 
-    private <T> Future<T> callSyncMethod(final Callable<T> task) {
-        CompletableFuture<T> completableFuture = new CompletableFuture<>();
-        Bukkit.getGlobalRegionScheduler().execute(DeluxeMenus.getInstance(), () -> {
+    private <T> java.util.concurrent.Future<T> callSyncMethod(final java.util.concurrent.Callable<T> task) {
+        java.util.concurrent.CompletableFuture<T> completableFuture = new java.util.concurrent.CompletableFuture<>();
+        Bukkit.getGlobalRegionScheduler().execute(plugin, () -> {
             try {
                 completableFuture.complete(task.call());
             } catch (Exception exception) {
