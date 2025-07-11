@@ -6,7 +6,7 @@ plugins {
 
 // Change to true when releasing
 val release = false
-val majorVersion = "1.14.1"
+val majorVersion = "1.14.2"
 val minorVersion = if (release) "Release" else "DEV-" + System.getenv("BUILD_NUMBER")
 
 group = "com.extendedclip"
@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.nashorn)
     implementation(libs.adventure.platform)
     implementation(libs.adventure.minimessage)
+    implementation(libs.bstats)
 
     compileOnly("org.jetbrains:annotations:23.0.0")
 }
@@ -53,6 +54,7 @@ tasks {
         relocate("org.objectweb.asm", "com.extendedclip.deluxemenus.libs.asm")
         relocate("org.openjdk.nashorn", "com.extendedclip.deluxemenus.libs.nashorn")
         relocate("net.kyori", "com.extendedclip.deluxemenus.libs.adventure")
+        relocate("org.bstats", "com.extendedclip.deluxemenus.libs.bstats")
         archiveFileName.set("DeluxeMenus-${rootProject.version}.jar")
     }
     java {

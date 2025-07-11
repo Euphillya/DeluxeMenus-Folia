@@ -30,6 +30,7 @@ public class MenuHolder implements InventoryHolder {
     private String menuName;
     private Set<MenuItem> activeItems;
     private io.papermc.paper.threadedregions.scheduler.ScheduledTask updateTask = null;
+    private io.papermc.paper.threadedregions.scheduler.ScheduledTask refreshTask = null;
     private Inventory inventory;
     private boolean updating;
     private boolean parsePlaceholdersInArguments;
@@ -137,8 +138,6 @@ public class MenuHolder implements InventoryHolder {
 
         setUpdating(true);
 
-        stopPlaceholderUpdate();
-
         Bukkit.getAsyncScheduler().runNow(this.plugin, (task) -> {
 
             final Set<MenuItem> active = new HashSet<>();
@@ -200,8 +199,10 @@ public class MenuHolder implements InventoryHolder {
 
                 setActiveItems(active);
 
-                if (update) {
+                if (update && updateTask == null) {
                     startUpdatePlaceholdersTask();
+                } else if(!update && updateTask != null) {
+                    stopPlaceholderUpdate();
                 }
 
                 setUpdating(false);
@@ -217,6 +218,33 @@ public class MenuHolder implements InventoryHolder {
             }
             updateTask = null;
         }
+    }
+
+    public void stopRefreshTask() {
+        if(refreshTask != null) {
+            try {
+                refreshTask.cancel();
+            } catch (Exception ignored) {
+            }
+            refreshTask = null;
+        }
+    }
+
+    public void startRefreshTask() {
+        if(refreshTask != null) {
+            stopRefreshTask();
+        }
+
+        refreshTask = new com.extendedclip.deluxemenus.utils.schedulers.FoliaRunnable(Bukkit.getAsyncScheduler(), java.util.concurrent.TimeUnit.MILLISECONDS) {
+            @Override
+            public void run() {
+                refreshMenu();
+            }
+        }.runAtFixedRate(plugin, 20L * 50,
+                20L * Menu.getMenuByName(menuName)
+                        .map(Menu::options)
+                        .map(MenuOptions::refreshInterval)
+                        .orElse(10) * 50);
     }
 
     public void startUpdatePlaceholdersTask() {
