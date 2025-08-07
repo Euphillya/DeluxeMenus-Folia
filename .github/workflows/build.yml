@@ -39,7 +39,22 @@ jobs:
       with:
         name: 'DeluxeMenus build PR-${{ github.event.number }}-${{ env.SHORT_SHA }}'
         path: build/libs
-
+    - name: Create Release
+      if: github.event_name != 'pull_request'
+      uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ env.tag }}
+        name: ${{ env.project_id_b }} - ${{ github.run_number }}
+        body: |
+          This release is automatically compiled by GitHub Actions
+          ### Commit Message
+          ${{ env.commit_msg }}
+        artifacts: build/libs/*.jar
+        generateReleaseNotes: true
+        prerelease: ${{ env.pre }}
+        makeLatest: ${{ env.make_latest }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        replacesArtifacts: false
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
     #
@@ -70,23 +85,6 @@ jobs:
     - name: Generate and submit dependency graph
       uses: gradle/actions/setup-gradle@v3 # v3.1.0
 
-
-    - name: Create Release
-      if: github.event_name != 'pull_request'
-      uses: ncipollo/release-action@v1
-      with:
-        tag: ${{ env.tag }}
-        name: ${{ env.project_id_b }} - ${{ github.run_number }}
-        body: |
-              This release is automatically compiled by GitHub Actions
-              ### Commit Message
-              ${{ env.commit_msg }}
-        artifacts: build/libs/*.jar
-        generateReleaseNotes: true
-        prerelease: ${{ env.pre }}
-        makeLatest: ${{ env.make_latest }}
-        token: ${{ secrets.GITHUB_TOKEN }}
-        replacesArtifacts: false
 
 permissions: write-all
 env:
