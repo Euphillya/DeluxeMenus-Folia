@@ -1,6 +1,10 @@
 package com.extendedclip.deluxemenus.menu;
 
 import com.extendedclip.deluxemenus.DeluxeMenus;
+import com.extendedclip.deluxemenus.action.ClickHandler;
+import com.extendedclip.deluxemenus.dupe.MenuItemMarker;
+import com.extendedclip.deluxemenus.events.DeluxeMenusOpenMenuEvent;
+import com.extendedclip.deluxemenus.events.DeluxeMenusPreOpenMenuEvent;
 import com.extendedclip.deluxemenus.menu.command.RegistrableMenuCommand;
 import com.extendedclip.deluxemenus.menu.options.MenuOptions;
 import com.extendedclip.deluxemenus.requirement.RequirementList;
@@ -269,6 +273,11 @@ public class Menu {
             return;
         }
 
+        DeluxeMenusPreOpenMenuEvent preOpenEvent = new DeluxeMenusPreOpenMenuEvent(viewer);
+        Bukkit.getPluginManager().callEvent(preOpenEvent);
+
+        if (preOpenEvent.isCancelled()) return;
+
         final MenuHolder holder = new MenuHolder(plugin, viewer);
         if (placeholderPlayer != null) {
             holder.setPlaceholderPlayer(placeholderPlayer);
@@ -285,7 +294,7 @@ public class Menu {
             return;
         }
 
-        Bukkit.getAsyncScheduler().runNow(plugin, (task) -> {
+        Bukkit.getAsyncScheduler().runNow(plugin, (async) -> {
 
             Set<MenuItem> activeItems = new HashSet<>();
 
@@ -374,7 +383,7 @@ public class Menu {
 
             final boolean updatePlaceholders = update;
 
-            holder.getViewer().getScheduler().run(plugin, (task1) -> {
+            viewer.getScheduler().run(plugin, (ptask) -> {
                 if(options.refresh()) {
                     holder.startRefreshTask();
                 }
@@ -389,6 +398,11 @@ public class Menu {
                 if (updatePlaceholders) {
                     holder.startUpdatePlaceholdersTask();
                 }
+            }, null);
+
+            viewer.getScheduler().run(plugin, (ptask) -> {
+                DeluxeMenusOpenMenuEvent openEvent = new DeluxeMenusOpenMenuEvent(viewer, holder);
+                Bukkit.getPluginManager().callEvent(openEvent);
             }, null);
         });
     }
@@ -416,4 +430,5 @@ public class Menu {
     public int activeViewers() {
         return (int) menuHolders.stream().filter(holder -> holder.getMenuName().equalsIgnoreCase(options.name())).count();
     }
+
 }
