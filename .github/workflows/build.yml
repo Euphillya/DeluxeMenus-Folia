@@ -6,12 +6,14 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions: write-all
+
 jobs:
   build:
 
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+#    permissions:
+#      contents: read
 
     steps:
     - uses: actions/checkout@v4
@@ -86,7 +88,6 @@ jobs:
       uses: gradle/actions/setup-gradle@v3 # v3.1.0
 
 
-permissions: write-all
 env:
   tag: build-${{ github.ref_name }}-${{ github.run_number }}
   project_id_b: DeluxeMenus-Folia
